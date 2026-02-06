@@ -1,9 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from typing import List
 import json
+import os
 
 from models import get_db, User, Essay, Annotation
 from schemas import (
@@ -21,7 +24,7 @@ app = FastAPI(title="Annotation Tool API")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -220,9 +223,29 @@ def submit_all_annotations(current_user: User = Depends(get_current_user), db: S
     
     return {"submitted_count": len(annotations)}
 
-@app.get("/")
+@app.get("/api")
 def root():
     return {"message": "Annotation Tool API", "version": "1.0"}
+
+# Mount frontend static files
+# Place this AFTER API routes to ensure API takes precedence
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+
+if os.path.exists(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Allow API calls to pass through
+        if full_path.startswith("api"):
+            raise HTTPException(status_code=404)
+        
+        # Serve file if it exists (e.g., vite.svg), else index.html
+        file_path = os.path.join(frontend_dist, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        return FileResponse(os.path.join(frontend_dist, "index.html"))
 
 if __name__ == "__main__":
     import uvicorn
