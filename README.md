@@ -1,180 +1,80 @@
-# Annotation Tool
+# 에세이 평가 도구 (Annotation Tool)
 
-Expert evaluation tool for synthetic AES (Automated Essay Scoring) data with per-trait annotation system.
+학생 에세이의 언어, 구성, 내용 등 세부 항목(Trait)별로 평가를 수행하고, 평가 점수에 따른 근거 문장을 선택하는 전문 어노테이션 도구입니다.
 
-## 🚀 Quick Start (Windows)
+## ✨ 주요 개선 사항 (최근 업데이트)
 
-### Prerequisites
-- Python 3.9 or higher ([Download](https://www.python.org/downloads/))
-- Node.js 18 or higher ([Download](https://nodejs.org/))
-- Git ([Download](https://git-scm.com/downloads))
+- **좌우 분할 레이아웃 (Split-Screen)**: 왼쪽 패널에서 에세이를 읽으며 오른쪽 패널에서 즉시 채점할 수 있도록 인터페이스를 개선했습니다.
+- **인터랙티브 평가 로직**: 평가 항목(언어, 구성, 내용)을 선택하면 해당 항목에 대한 문장 선택 모드가 활성화됩니다.
+- **실시간 진행률 반영**: "최종 평가 저장" 시 대시보드의 진행률(Progress)이 즉시 갱신되도록 로직을 보강했습니다.
+- **새로고침 유지**: 페이지를 새로고침해도 로그인 정보와 사용자 이름이 유지됩니다.
 
-### Installation
+## 🚀 로컬 실행 방법
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/junha-research/papcli_anno.git
-   cd papcli_anno
-   ```
+### 1. 필수 프로그램
+- **Python 3.9+**
+- **Node.js 18+**
 
-2. **Run setup** (first time only)
-   ```bash
-   setup.bat
-   ```
-   This will:
-   - Create Python virtual environment
-   - Install all dependencies
-   - Initialize the database with 5 mock essays and 4 test accounts
-   - Build the frontend
-
-3. **Start the application**
-   ```bash
-   start.bat
-   ```
-   This will open two windows:
-   - Backend server (http://localhost:8000)
-   - Frontend server (http://localhost:4173)
-
-4. **Access the application**
-   - Open your browser and go to: http://localhost:4173
-   - Login with test accounts:
-     - `annotator1` / `password123`
-     - `annotator2` / `password123`
-     - `annotator3` / `password123`
-     - `annotator4` / `password123`
-
-## 🌐 External Access Setup
-
-To allow access from outside your local network:
-
-1. **Configure external access**
-   ```bash
-   configure_external_access.bat
-   ```
-   Enter your public IP when prompted.
-
-2. **Set up port forwarding** on your router:
-   - Port 8000 → Backend
-   - Port 4173 → Frontend
-
-3. **Open Windows Firewall** (Run PowerShell as Administrator):
-   ```powershell
-   netsh advfirewall firewall add rule name="Annotation Backend" dir=in action=allow protocol=TCP localport=8000
-   netsh advfirewall firewall add rule name="Annotation Frontend" dir=in action=allow protocol=TCP localport=4173
-   ```
-
-4. **Rebuild frontend**
-   ```bash
-   cd frontend
-   npm run build
-   ```
-
-5. **Restart the application**
-   ```bash
-   start.bat
-   ```
-
-Users can now access at: `http://YOUR_PUBLIC_IP:4173`
-
-## 📁 Project Structure
-
-```
-annotation-tool/
-├── backend/              # FastAPI backend
-│   ├── main.py          # API endpoints
-│   ├── models.py        # Database models
-│   ├── schemas.py       # Pydantic schemas
-│   ├── auth.py          # Authentication
-│   ├── init_db.py       # Database initialization
-│   └── requirements.txt # Python dependencies
-├── frontend/            # React frontend
-│   ├── src/
-│   │   ├── pages/      # Login, Dashboard, Annotate
-│   │   ├── api/        # API client
-│   │   └── store/      # State management
-│   └── package.json    # Node dependencies
-├── setup.bat           # Initial setup script
-├── start.bat           # Start application
-└── configure_external_access.bat  # External access setup
-```
-
-## 🎯 Features
-
-- **User Authentication**: JWT-based authentication with 4 test accounts
-- **Per-Trait Evaluation**: Independent scoring for Language, Organization, and Content
-- **Sentence Selection**: Formula-based sentence selection (n_sc = round(n_se * (5 - score) / 5))
-- **Progress Tracking**: Real-time annotation progress on dashboard
-- **Data Persistence**: SQLite database for all annotations
-
-## 📊 Data Export
-
-Annotation data is stored in `backend/annotation.db`. To export:
-
-```python
-import sqlite3
-import pandas as pd
-
-conn = sqlite3.connect('backend/annotation.db')
-annotations = pd.read_sql_query("SELECT * FROM annotations", conn)
-annotations.to_csv('annotations_export.csv', index=False)
-conn.close()
-```
-
-## 🔧 Manual Commands
-
-If you prefer manual control:
-
-### Backend
+### 2. 백엔드 실행 (Terminal 1)
 ```bash
-cd backend
+cd annotation-tool/backend
+# 가상환경 활성화 (최초 1회만 venv 생성 필요)
 python -m venv venv
-venv\Scripts\activate
+source venv/bin/activate  # Mac/Linux
+# venv\Scripts\activate  # Windows
+
+# 패키지 설치 및 DB 초기화 (최초 1회)
 pip install -r requirements.txt
 python init_db.py
+
+# 서버 실행
 python main.py
 ```
 
-### Frontend
+### 3. 프론트엔드 실행 (Terminal 2)
 ```bash
-cd frontend
+cd annotation-tool/frontend
+# 패키지 설치 (최초 1회)
 npm install
-npm run build
-npm run preview -- --host 0.0.0.0 --port 4173
+
+# 개발 서버 실행
+npm run dev
 ```
 
-## 📝 API Documentation
+접속 주소: [http://localhost:5173](http://localhost:5173)
 
-Once the backend is running, visit:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+## 🔑 테스트 계정
+- 아이디: `annotator1` ~ `annotator4`
+- 비밀번호: `password123`
 
-## ⚠️ Troubleshooting
+## 📋 사용 가이드
 
-### Port already in use
-If ports 8000 or 4173 are already in use:
-```bash
-# Find and kill the process
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
+1. **대시보드**: 할당된 에세이 목록과 현재 진행률을 확인합니다.
+2. **에세이 선택**: 평가할 에세이 카드를 클릭하여 상세 페이지로 이동합니다.
+3. **평가 수행 (Annotate)**:
+   - **우측 패널**에서 평가할 항목(예: 언어)을 클릭합니다.
+   - **점수 선택**: 1~5점 중 점수를 선택합니다. 선택한 점수에 따라 필요한 문장 개수가 자동으로 계산됩니다.
+   - **문장 선택**: **좌측 패널**의 에세이 본문에서 어색하거나 수정이 필요한 문장을 클릭하여 선택합니다.
+   - **상태 확인**: 문장 개수가 충족되면 카드 색상이 초록색으로 변경됩니다.
+4. **저장**: 모든 항목 평가 완료 후 "최종 평가 저장" 버튼을 클릭합니다.
+
+## 📁 프로젝트 구조
+
+```
+annotation-tool/
+├── backend/              # FastAPI 백엔드
+│   ├── main.py          # API 엔드포인트 및 로직
+│   ├── models.py        # SQLAlchemy DB 모델
+│   ├── init_db.py       # 초기 데이터 생성 스크립트
+│   └── annotation.db    # SQLite 데이터베이스 (자동 생성)
+└── frontend/            # React + Vite 프론트엔드
+    ├── src/
+    │   ├── pages/      # 주요 화면 (Annotate, Dashboard, Login)
+    │   ├── api/        # Axios API 클라이언트
+    │   └── store/      # Zustand 상태 관리 (Auth)
+    └── App.tsx         # 라우팅 설정
 ```
 
-### Database issues
-To reset the database:
-```bash
-cd backend
-del annotation.db
-python init_db.py
-```
-
-### Frontend not connecting to backend
-1. Check `frontend/.env` file
-2. Ensure backend is running
-3. Check CORS settings in `backend/main.py`
-
-## 📄 License
-
-MIT License
-
-## 👥 Contributors
-
-- Junha (junha-research)
+## ⚠️ 주의사항
+- 본 프로젝트는 현재 로컬 실험 환경에 최적화되어 있습니다.
+- 공인 IP를 통한 배포를 시도할 경우, `frontend/src/api/client.ts`의 `API_BASE_URL`을 서버 IP로 수정하고 빌드해야 합니다.
