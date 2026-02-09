@@ -10,8 +10,10 @@ export default function Annotate() {
     const { essayId } = useParams<{ essayId: string }>();
     const navigate = useNavigate();
     const [essay, setEssay] = useState<Essay | null>(null);
+    const [essays, setEssays] = useState<Essay[]>([]);
     const [annotation, setAnnotation] = useState<Annotation | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // Active trait for selection
     const [activeTrait, setActiveTrait] = useState<TraitType>('language');
@@ -29,18 +31,27 @@ export default function Annotate() {
         if (!essayId) return;
 
         try {
-            const [essayData, annotationData] = await Promise.all([
+            const [essayData, annotationData, allEssays] = await Promise.all([
                 essayApi.getEssay(parseInt(essayId)),
-                annotationApi.getAnnotation(parseInt(essayId))
+                annotationApi.getAnnotation(parseInt(essayId)),
+                essayApi.getEssays()
             ]);
 
             setEssay(essayData);
+            setEssays(allEssays);
 
             if (annotationData) {
                 setAnnotation(annotationData);
                 setLanguage(annotationData.language);
                 setOrganization(annotationData.organization);
                 setContent(annotationData.content);
+            } else {
+                // Reset state for new essay
+                setAnnotation(null);
+                setLanguage({ score: null, selected_sentences: [] });
+                setOrganization({ score: null, selected_sentences: [] });
+                setContent({ score: null, selected_sentences: [] });
+                setActiveTrait('language');
             }
         } catch (error) {
             console.error('Failed to load data:', error);
@@ -59,6 +70,11 @@ export default function Annotate() {
         const setState = trait === 'language' ? setLanguage : trait === 'organization' ? setOrganization : setContent;
         const state = trait === 'language' ? language : trait === 'organization' ? organization : content;
 
+        if (state.score === null) {
+            alert('이 항목에 대한 점수를 먼저 선택해 주세요.');
+            return;
+        }
+
         const selected = state.selected_sentences.includes(index)
             ? state.selected_sentences.filter(i => i !== index)
             : [...state.selected_sentences, index].sort((a, b) => a - b);
@@ -67,7 +83,7 @@ export default function Annotate() {
     };
 
     const handleSave = async () => {
-        if (!essay || !essayId) return;
+        if (!essay || !essayId || essays.length === 0) return;
 
         const data = {
             essay_id: parseInt(essayId),
@@ -82,8 +98,21 @@ export default function Annotate() {
             } else {
                 await annotationApi.createAnnotation(data);
             }
-            alert('저장되었습니다!');
-            navigate('/dashboard');
+
+            // Find current index and check for next essay
+            const currentIndex = essays.findIndex(e => e.id === essay.id);
+            const nextEssay = essays[currentIndex + 1];
+
+            if (nextEssay) {
+                if (window.confirm('저장되었습니다. 다음 에세이를 바로 채점하시겠습니까?')) {
+                    navigate(`/annotate/${nextEssay.id}`);
+                } else {
+                    navigate('/dashboard');
+                }
+            } else {
+                alert('마지막 에세이입니다. 저장 후 목록으로 이동합니다.');
+                navigate('/dashboard');
+            }
         } catch (error: any) {
             alert('저장 실패: ' + (error.response?.data?.detail || error.message));
         }
@@ -97,14 +126,38 @@ export default function Annotate() {
     const requiredCount = calculateRequired(totalSentences, currentTraitState.score);
 
     return (
-        <div className="annotate-container">
+        <div className={`annotate-container ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
             <header className="annotate-header">
-                <button onClick={() => navigate('/dashboard')} className="back-btn">← 목록으로</button>
-                <h1>{essay.title}</h1>
+                <div className="header-left">
+                    <h1>{essay.title}</h1>
+                </div>
+                <div className="header-right">
+                    <button onClick={() => navigate('/dashboard')} className="back-btn">← 목록으로</button>
+                </div>
             </header>
 
             <div className="annotate-layout">
-                {/* Left Panel: Question & Essay */}
+                {/* Left Sidebar: Essay List */}
+                <aside className={`essay-sidebar ${isSidebarOpen ? 'open' : 'closed'}`}>
+                    <div className="sidebar-header">
+                        <h3>에세이 목록</h3>
+                        <span className="count">{essays.filter(e => e.is_annotated).length} / {essays.length}</span>
+                    </div>
+                    <div className="sidebar-list">
+                        {essays.map((e) => (
+                            <div
+                                key={e.id}
+                                className={`sidebar-item ${e.id === essay.id ? 'active' : ''} ${e.is_annotated ? 'completed' : ''}`}
+                                onClick={() => navigate(`/annotate/${e.id}`)}
+                            >
+                                <span className="status-icon">{e.is_annotated ? '✓' : '•'}</span>
+                                <span className="title">{e.title}</span>
+                            </div>
+                        ))}
+                    </div>
+                </aside>
+
+                {/* Center Panel: Question & Essay */}
                 <div className="left-panel">
                     <section className="question-section">
                         <h3>질문 (Question)</h3>
@@ -177,10 +230,34 @@ export default function Annotate() {
                         onActivate={() => setActiveTrait('content')}
                     />
 
+                    <div className="trait-navigation">
+                        <button 
+                            className="nav-btn"
+                            disabled={activeTrait === 'language'}
+                            onClick={() => setActiveTrait(activeTrait === 'content' ? 'organization' : 'language')}
+                        >
+                            ← 이전 항목
+                        </button>
+                        <button 
+                            className="nav-btn"
+                            disabled={activeTrait === 'content'}
+                            onClick={() => setActiveTrait(activeTrait === 'language' ? 'organization' : 'content')}
+                        >
+                            다음 항목 →
+                        </button>
+                    </div>
+
                     <div className="floating-actions">
                         <button onClick={handleSave} className="save-btn">최종 평가 저장</button>
                     </div>
                 </div>
+
+                <button 
+                    className="sidebar-handle-btn" 
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                >
+                    {isSidebarOpen ? '사이드바 닫기' : '사이드바 열기'}
+                </button>
             </div>
         </div>
     );
@@ -211,7 +288,6 @@ function EvaluationCard({
     return (
         <div 
             className={`eval-card ${isActive ? 'active' : ''} ${isComplete ? 'complete' : ''}`}
-            onClick={onActivate}
         >
             <div className="card-header">
                 <h4>{title}</h4>
@@ -225,9 +301,11 @@ function EvaluationCard({
                         <button
                             key={s}
                             className={`score-btn ${score === s ? 'selected' : ''}`}
+                            disabled={!isActive}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onScoreChange(s);
+                                onActivate();
                             }}
                         >
                             {s}

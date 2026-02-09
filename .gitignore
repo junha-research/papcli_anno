@@ -24,3 +24,9 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+
+# DB
+backend/*.db
+
+# CSV
+*.csv
