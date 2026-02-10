@@ -75,14 +75,16 @@ def get_essay(essay_id: int, db: Session = Depends(get_db), current_user: User =
     if not essay:
         raise HTTPException(status_code=404, detail="Essay not found")
     
-    # Split into sentences (simple split by '. ')
-    sentences = [s.strip() for s in essay.content.split('. ') if s.strip()]
+    # 문장 분리: 마침표/물음표/느낌표 뒤의 '공백'만을 기준으로 나눔 (줄바꿈 \n은 문장에 포함되어 보존됨)
+    import re
+    sentences = re.split(r'(?<=[.!?]) +', essay.content.strip())
     
     return EssayDetail(
         id=essay.id,
         title=essay.title,
         content=essay.content,
         question=essay.question,
+        evidence=essay.evidence,
         sentences=sentences
     )
 

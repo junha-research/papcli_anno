@@ -14,6 +14,7 @@ export default function Annotate() {
     const [annotation, setAnnotation] = useState<Annotation | null>(null);
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [showEvidence, setShowEvidence] = useState(false);
 
     // Active trait for selection
     const [activeTrait, setActiveTrait] = useState<TraitType>('language');
@@ -129,7 +130,7 @@ export default function Annotate() {
         <div className={`annotate-container ${!isSidebarOpen ? 'sidebar-collapsed' : ''}`}>
             <header className="annotate-header">
                 <div className="header-left">
-                    <h1>{essay.title}</h1>
+                    <h1>{essay.title.split('_')[0]}</h1>
                 </div>
                 <div className="header-right">
                     <button onClick={() => navigate('/dashboard')} className="back-btn">← 목록으로</button>
@@ -151,7 +152,7 @@ export default function Annotate() {
                                 onClick={() => navigate(`/annotate/${e.id}`)}
                             >
                                 <span className="status-icon">{e.is_annotated ? '✓' : '•'}</span>
-                                <span className="title">{e.title}</span>
+                                <span className="title">{e.title.split('_')[0]}</span>
                             </div>
                         ))}
                     </div>
@@ -160,8 +161,30 @@ export default function Annotate() {
                 {/* Center Panel: Question & Essay */}
                 <div className="left-panel">
                     <section className="question-section">
-                        <h3>질문 (Question)</h3>
+                        <div className="section-header">
+                            <h3>질문 (Question)</h3>
+                            <button 
+                                className={`evidence-toggle-btn ${showEvidence ? 'active' : ''}`}
+                                onClick={() => setShowEvidence(!showEvidence)}
+                            >
+                                {showEvidence ? '💡 질문만 보기' : '💡 참고자료 보기'}
+                            </button>
+                        </div>
                         <div className="question-box">{essay.question}</div>
+                        
+                        {showEvidence && essay.evidence && (
+                            <div className="evidence-section">
+                                <h4>📚 채점 참고 근거 (Evidence List)</h4>
+                                <div className="evidence-list">
+                                    {JSON.parse(essay.evidence).map((item: any, idx: number) => (
+                                        <div key={idx} className="evidence-item">
+                                            <span className="evidence-section-name">[{item.section}]</span>
+                                            <p className="evidence-text">{item.original_sentence}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </section>
 
                     <section className="essay-section">
@@ -175,18 +198,18 @@ export default function Annotate() {
                             </span>
                         </div>
                         
-                        <div className="sentences-list">
+                        <div className="essay-content-paragraph">
                             {essay.sentences?.map((sentence, idx) => {
                                 const isSelected = currentTraitState.selected_sentences.includes(idx);
                                 return (
-                                    <div
+                                    <span
                                         key={idx}
-                                        className={`sentence-item ${isSelected ? 'selected' : ''}`}
+                                        className={`sentence-span ${isSelected ? 'selected' : ''}`}
                                         onClick={() => toggleSentence(idx)}
+                                        title={`문장 ${idx + 1}`}
                                     >
-                                        <span className="sentence-num">{idx + 1}</span>
-                                        <span className="sentence-text">{sentence}</span>
-                                    </div>
+                                        {sentence}{' '}
+                                    </span>
                                 );
                             })}
                         </div>

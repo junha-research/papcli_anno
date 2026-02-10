@@ -80,7 +80,7 @@ export default function Dashboard() {
                                 onClick={() => navigate(`/annotate/${essay.id}`)}
                             >
                                 <div className="essay-card-header">
-                                    <h3>{essay.title}</h3>
+                                    <h3>{essay.title.split('_')[0]}</h3>
                                     {essay.is_annotated && <span className="badge">✓ Completed</span>}
                                 </div>
                                 <p className="essay-question">{essay.question}</p>

@@ -30,3 +30,6 @@ backend/*.db
 
 # CSV
 *.csv
+
+# json
+*.json

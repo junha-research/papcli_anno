@@ -29,6 +29,7 @@ class Essay(Base):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     question = Column(Text, nullable=False)
+    evidence = Column(Text)  # JSON array of evidence
     
     annotations = relationship("Annotation", back_populates="essay")
 

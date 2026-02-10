@@ -35,6 +35,7 @@ class EssayDetail(BaseModel):
     title: str
     content: str
     question: str
+    evidence: Optional[str] = None
     sentences: List[str]
     
     class Config:

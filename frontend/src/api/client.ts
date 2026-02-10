@@ -40,6 +40,7 @@ export interface Essay {
     title: string;
     content: string;
     question: string;
+    evidence?: string; // JSON string
     is_annotated?: boolean;
     sentences?: string[];
 }
