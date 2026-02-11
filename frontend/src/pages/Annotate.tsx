@@ -19,6 +19,12 @@ export default function Annotate() {
     // Active trait for selection
     const [activeTrait, setActiveTrait] = useState<TraitType>('language');
 
+    const traitDescriptions: Record<TraitType, string> = {
+        language: "언어 항목 평가 기준에 대한 설명입니다. 문법, 어휘, 표현의 다양성 등을 고려합니다.",
+        organization: "구성 항목 평가 기준에 대한 설명입니다. 글의 흐름, 단락 구성, 논리적 연결성 등을 고려합니다.",
+        content: "내용 항목 평가 기준에 대한 설명입니다. 주제의 명확성, 아이디어의 깊이, 관련성 등을 고려합니다."
+    };
+
     // Trait states
     const [language, setLanguage] = useState<TraitAnnotation>({ score: null, selected_sentences: [] });
     const [organization, setOrganization] = useState<TraitAnnotation>({ score: null, selected_sentences: [] });
@@ -220,51 +226,65 @@ export default function Annotate() {
                 <div className="right-panel">
                     <h3>평가 및 채점</h3>
                     
-                    <EvaluationCard
-                        title="1️⃣ 언어 (Language)"
-                        trait="language"
-                        score={language.score}
-                        onScoreChange={(s) => setLanguage({ ...language, score: s })}
-                        selectedCount={language.selected_sentences.length}
-                        requiredCount={calculateRequired(totalSentences, language.score)}
-                        isActive={activeTrait === 'language'}
-                        onActivate={() => setActiveTrait('language')}
-                    />
+                    {/* Dynamically rendered EvaluationCard based on activeTrait */}
+                    {(activeTrait === 'language' && (
+                        <EvaluationCard
+                            title="1️⃣ 언어 (Language)"
+                            trait="language"
+                            score={language.score}
+                            onScoreChange={(s) => setLanguage({ ...language, score: s })}
+                            selectedCount={language.selected_sentences.length}
+                            requiredCount={calculateRequired(totalSentences, language.score)}
+                            isActive={true}
+                            onActivate={() => setActiveTrait('language')}
+                        />
+                    )) || (activeTrait === 'organization' && (
+                        <EvaluationCard
+                            title="2️⃣ 구성 (Organization)"
+                            trait="organization"
+                            score={organization.score}
+                            onScoreChange={(s) => setOrganization({ ...organization, score: s })}
+                            selectedCount={organization.selected_sentences.length}
+                            requiredCount={calculateRequired(totalSentences, organization.score)}
+                            isActive={true}
+                            onActivate={() => setActiveTrait('organization')}
+                        />
+                    )) || (activeTrait === 'content' && (
+                        <EvaluationCard
+                            title="3️⃣ 내용 (Content)"
+                            trait="content"
+                            score={content.score}
+                            onScoreChange={(s) => setContent({ ...content, score: s })}
+                            selectedCount={content.selected_sentences.length}
+                            requiredCount={calculateRequired(totalSentences, content.score)}
+                            isActive={true}
+                            onActivate={() => setActiveTrait('content')}
+                        />
+                    ))}
 
-                    <EvaluationCard
-                        title="2️⃣ 구성 (Organization)"
-                        trait="organization"
-                        score={organization.score}
-                        onScoreChange={(s) => setOrganization({ ...organization, score: s })}
-                        selectedCount={organization.selected_sentences.length}
-                        requiredCount={calculateRequired(totalSentences, organization.score)}
-                        isActive={activeTrait === 'organization'}
-                        onActivate={() => setActiveTrait('organization')}
-                    />
-
-                    <EvaluationCard
-                        title="3️⃣ 내용 (Content)"
-                        trait="content"
-                        score={content.score}
-                        onScoreChange={(s) => setContent({ ...content, score: s })}
-                        selectedCount={content.selected_sentences.length}
-                        requiredCount={calculateRequired(totalSentences, content.score)}
-                        isActive={activeTrait === 'content'}
-                        onActivate={() => setActiveTrait('content')}
-                    />
+                    <div className="trait-description-box">
+                        <h4>평가 기준</h4>
+                        <p>{traitDescriptions[activeTrait]}</p>
+                    </div>
 
                     <div className="trait-navigation">
                         <button 
                             className="nav-btn"
                             disabled={activeTrait === 'language'}
-                            onClick={() => setActiveTrait(activeTrait === 'content' ? 'organization' : 'language')}
+                            onClick={() => {
+                                if (activeTrait === 'organization') setActiveTrait('language');
+                                else if (activeTrait === 'content') setActiveTrait('organization');
+                            }}
                         >
                             ← 이전 항목
                         </button>
                         <button 
                             className="nav-btn"
                             disabled={activeTrait === 'content'}
-                            onClick={() => setActiveTrait(activeTrait === 'language' ? 'organization' : 'content')}
+                            onClick={() => {
+                                if (activeTrait === 'language') setActiveTrait('organization');
+                                else if (activeTrait === 'organization') setActiveTrait('content');
+                            }}
                         >
                             다음 항목 →
                         </button>

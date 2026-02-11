@@ -447,6 +447,29 @@
     border-top: 1px solid #e0e0e0;
 }
 
+/* Styles for the new description box */
+.trait-description-box {
+    background: #eef2ff; /* Light blue background */
+    border: 1px solid #c7d2fe; /* Matching border */
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem; /* Space from the eval card */
+}
+
+.trait-description-box h4 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: #4f46e5; /* Matching active color */
+}
+
+.trait-description-box p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.5;
+}
+
 .nav-btn {
     flex: 1;
     padding: 0.75rem;
