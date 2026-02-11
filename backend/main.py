@@ -75,9 +75,9 @@ def get_essay(essay_id: int, db: Session = Depends(get_db), current_user: User =
     if not essay:
         raise HTTPException(status_code=404, detail="Essay not found")
     
-    # 문장 분리: 마침표/물음표/느낌표 뒤의 '공백'만을 기준으로 나눔 (줄바꿈 \n은 문장에 포함되어 보존됨)
+    # 문장 분리: 마침표/물음표/느낌표 뒤의 '공백' 또는 '줄바꿈 문자(\n)'를 기준으로 나눔
     import re
-    sentences = re.split(r'(?<=[.!?]) +', essay.content.strip())
+    sentences = [s for s in re.split(r'(?<=[.!?])\s+|\n', essay.content.strip()) if s]
     
     return EssayDetail(
         id=essay.id,
