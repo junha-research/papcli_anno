@@ -44,6 +44,11 @@ export default function Annotate() {
                 essayApi.getEssays()
             ]);
 
+            // 프론트엔드에서 문장 분리 재처리 (\n 및 공백 기준)
+            if (essayData && essayData.content) {
+                essayData.sentences = essayData.content.trim().split(/(?<=[.!?])\s+|\n/).filter(s => s.trim().length > 0);
+            }
+
             setEssay(essayData);
             setEssays(allEssays);
 
@@ -226,46 +231,41 @@ export default function Annotate() {
                 <div className="right-panel">
                     <h3>평가 및 채점</h3>
                     
-                    {/* Dynamically rendered EvaluationCard based on activeTrait */}
-                    {(activeTrait === 'language' && (
-                        <EvaluationCard
-                            title="1️⃣ 언어 (Language)"
-                            trait="language"
-                            score={language.score}
-                            onScoreChange={(s) => setLanguage({ ...language, score: s })}
-                            selectedCount={language.selected_sentences.length}
-                            requiredCount={calculateRequired(totalSentences, language.score)}
-                            isActive={true}
-                            onActivate={() => setActiveTrait('language')}
-                        />
-                    )) || (activeTrait === 'organization' && (
-                        <EvaluationCard
-                            title="2️⃣ 구성 (Organization)"
-                            trait="organization"
-                            score={organization.score}
-                            onScoreChange={(s) => setOrganization({ ...organization, score: s })}
-                            selectedCount={organization.selected_sentences.length}
-                            requiredCount={calculateRequired(totalSentences, organization.score)}
-                            isActive={true}
-                            onActivate={() => setActiveTrait('organization')}
-                        />
-                    )) || (activeTrait === 'content' && (
-                        <EvaluationCard
-                            title="3️⃣ 내용 (Content)"
-                            trait="content"
-                            score={content.score}
-                            onScoreChange={(s) => setContent({ ...content, score: s })}
-                            selectedCount={content.selected_sentences.length}
-                            requiredCount={calculateRequired(totalSentences, content.score)}
-                            isActive={true}
-                            onActivate={() => setActiveTrait('content')}
-                        />
-                    ))}
+                    <EvaluationCard
+                        title="1️⃣ 언어 (Language)"
+                        trait="language"
+                        score={language.score}
+                        onScoreChange={(s) => setLanguage({ ...language, score: s })}
+                        selectedCount={language.selected_sentences.length}
+                        requiredCount={calculateRequired(totalSentences, language.score)}
+                        isActive={activeTrait === 'language'}
+                        onActivate={() => setActiveTrait('language')}
+                        description={traitDescriptions.language}
+                    />
 
-                    <div className="trait-description-box">
-                        <h4>평가 기준</h4>
-                        <p>{traitDescriptions[activeTrait]}</p>
-                    </div>
+                    <EvaluationCard
+                        title="2️⃣ 구성 (Organization)"
+                        trait="organization"
+                        score={organization.score}
+                        onScoreChange={(s) => setOrganization({ ...organization, score: s })}
+                        selectedCount={organization.selected_sentences.length}
+                        requiredCount={calculateRequired(totalSentences, organization.score)}
+                        isActive={activeTrait === 'organization'}
+                        onActivate={() => setActiveTrait('organization')}
+                        description={traitDescriptions.organization}
+                    />
+
+                    <EvaluationCard
+                        title="3️⃣ 내용 (Content)"
+                        trait="content"
+                        score={content.score}
+                        onScoreChange={(s) => setContent({ ...content, score: s })}
+                        selectedCount={content.selected_sentences.length}
+                        requiredCount={calculateRequired(totalSentences, content.score)}
+                        isActive={activeTrait === 'content'}
+                        onActivate={() => setActiveTrait('content')}
+                        description={traitDescriptions.content}
+                    />
 
                     <div className="trait-navigation">
                         <button 
@@ -315,6 +315,7 @@ interface EvaluationCardProps {
     requiredCount: number;
     isActive: boolean;
     onActivate: () => void;
+    description: string;
 }
 
 function EvaluationCard({
@@ -324,43 +325,56 @@ function EvaluationCard({
     selectedCount,
     requiredCount,
     isActive,
-    onActivate
+    onActivate,
+    description
 }: EvaluationCardProps) {
     const isComplete = score !== null && selectedCount === requiredCount;
 
     return (
         <div 
             className={`eval-card ${isActive ? 'active' : ''} ${isComplete ? 'complete' : ''}`}
+            onClick={!isActive ? onActivate : undefined}
+            style={{ cursor: !isActive ? 'pointer' : 'default' }}
         >
             <div className="card-header">
                 <h4>{title}</h4>
                 {isActive && <span className="active-badge">평가 중</span>}
             </div>
 
-            <div className="score-group">
-                <label>점수 선택:</label>
-                <div className="score-buttons">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                        <button
-                            key={s}
-                            className={`score-btn ${score === s ? 'selected' : ''}`}
-                            disabled={!isActive}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                onScoreChange(s);
-                                onActivate();
-                            }}
-                        >
-                            {s}
-                        </button>
-                    ))}
-                </div>
-            </div>
+            {isActive ? (
+                <>
+                    <div className="score-group">
+                        <label>점수 선택:</label>
+                        <div className="score-buttons">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                                <button
+                                    key={s}
+                                    className={`score-btn ${score === s ? 'selected' : ''}`}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onScoreChange(s);
+                                    }}
+                                >
+                                    {s}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-            {score !== null && (
-                <div className={`selection-status ${isComplete ? 'valid' : 'invalid'}`}>
-                    문장 선택: <strong>{selectedCount} / {requiredCount}</strong>
-                    {isComplete && <span className="check-icon">✓</span>}
+                    {score !== null && (
+                        <div className={`selection-status ${isComplete ? 'valid' : 'invalid'}`}>
+                            문장 선택: <strong>{selectedCount} / {requiredCount}</strong>
+                            {isComplete && <span className="check-icon">✓</span>}
+                        </div>
+                    )}
+                    
+                    <div className="trait-active-description">
+                        <p>{description}</p>
+                    </div>
+                </>
+            ) : (
+                <div className="trait-inactive-description">
+                    <p>{description}</p>
                 </div>
             )}
         </div>

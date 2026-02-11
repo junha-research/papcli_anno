@@ -470,6 +470,31 @@
     line-height: 1.5;
 }
 
+.trait-active-description {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.trait-active-description p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+.trait-inactive-description {
+    margin-top: 0.25rem;
+}
+
+.trait-inactive-description p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
 .nav-btn {
     flex: 1;
     padding: 0.75rem;
