@@ -59,6 +59,12 @@ export default function Annotate() {
     // Active trait for selection
     const [activeTrait, setActiveTrait] = useState<TraitType>('content');
 
+    const traitDescriptions: Record<TraitType, string> = {
+        language: "언어 항목 평가 기준에 대한 설명입니다. 문법, 어휘, 표현의 다양성 등을 고려합니다.",
+        organization: "구성 항목 평가 기준에 대한 설명입니다. 글의 흐름, 단락 구성, 논리적 연결성 등을 고려합니다.",
+        content: "내용 항목 평가 기준에 대한 설명입니다. 주제의 명확성, 아이디어의 깊이, 관련성 등을 고려합니다."
+    };
+
     // Trait states
     const [language, setLanguage] = useState<TraitAnnotation>({ score: null, selected_sentences: [] });
     const [organization, setOrganization] = useState<TraitAnnotation>({ score: null, selected_sentences: [] });
@@ -95,6 +101,11 @@ export default function Annotate() {
                 essayApi.getEssay(essayId),
                 annotationApi.getAnnotation(essayId)
             ]);
+
+            // 프론트엔드에서 문장 분리 재처리 (\n 및 공백 기준)
+            if (essayData && essayData.content) {
+                essayData.sentences = essayData.content.trim().split(/(?<=[.!?])\s+|\n/).filter(s => s.trim().length > 0);
+            }
 
             setEssay(essayData);
 
@@ -456,6 +467,8 @@ function EvaluationCard({
     return (
         <div 
             className={`eval-card ${isActive ? 'active' : ''} ${isComplete ? 'complete' : ''}`}
+            onClick={!isActive ? onActivate : undefined}
+            style={{ cursor: !isActive ? 'pointer' : 'default' }}
         >
             <div className="card-header">
                 <h4>{title}</h4>
