@@ -30,6 +30,8 @@ class Essay(Base):
     content = Column(Text, nullable=False)
     question = Column(Text, nullable=False)
     evidence = Column(Text)  # JSON array of evidence
+    summary = Column(Text)   # AI feedback (reasoning, scores, etc.)
+    paper_summary = Column(Text) # Actual paper summary from papers_summary.json
     
     annotations = relationship("Annotation", back_populates="essay")
 
@@ -39,6 +41,12 @@ class Annotation(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     essay_id = Column(Integer, ForeignKey("essays.id"), nullable=False)
+    
+    # ---------------------------------------------------------
+    # [추가된 핵심 컬럼] 블라인드 평가 및 순서 통제용
+    blind_id = Column(String, unique=True, index=True, nullable=False) # 예: #A7X9B2
+    display_order = Column(Integer, nullable=False) # 1 ~ 26 번호
+    # ---------------------------------------------------------
     
     # Language
     score_language = Column(Integer, CheckConstraint('score_language BETWEEN 1 AND 5'))
@@ -51,6 +59,9 @@ class Annotation(Base):
     # Content
     score_content = Column(Integer, CheckConstraint('score_content BETWEEN 1 AND 5'))
     selected_sentences_content = Column(Text)  # JSON array
+
+    # AI Feedback
+    score_ai_feedback = Column(Integer, CheckConstraint('score_ai_feedback BETWEEN 1 AND 5'))
     
     is_submitted = Column(Boolean, default=False)
     created_at = Column(String, default=lambda: datetime.utcnow().isoformat())

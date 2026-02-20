@@ -23,6 +23,31 @@
     color: #666;
 }
 
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.summary-btn {
+    padding: 0.2rem 0.6rem;
+    background: #667eea;
+    color: white;
+    border: 1px solid #5a67d8;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    width: auto;
+    min-width: fit-content;
+}
+
+.summary-btn:hover {
+    background: #5a67d8;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 .logout-btn {
     padding: 0.2rem 0.6rem;
     background: #ffffff;
@@ -105,6 +130,30 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 0.75rem;
+}
+
+.card-badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.card-summary-btn {
+    padding: 0.2rem 0.5rem;
+    background: #f0f4ff;
+    color: #4c51bf;
+    border: 1px solid #c3dafe;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.card-summary-btn:hover {
+    background: #ebf4ff;
+    border-color: #a3bffa;
 }
 
 .essay-card h3 {

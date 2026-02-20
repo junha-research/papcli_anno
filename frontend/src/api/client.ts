@@ -34,7 +34,14 @@ export interface Annotation {
     language: TraitAnnotation;
     organization: TraitAnnotation;
     content: TraitAnnotation;
+    ai_feedback_score?: number | null;
     is_submitted: boolean;
+}
+
+export interface BlindAnnotationInfo {
+    blind_id: string;
+    display_order: number;
+    essay_id: number;
 }
 
 export interface Essay {
@@ -45,6 +52,7 @@ export interface Essay {
     evidence?: string; // JSON string
     is_annotated?: boolean;
     sentences?: string[];
+    summary?: string;
 }
 
 export const authApi = {
@@ -75,8 +83,13 @@ export const essayApi = {
 };
 
 export const annotationApi = {
+    getBlindAnnotationIds: async () => {
+        const response = await api.get<BlindAnnotationInfo[]>('/annotations/blind-ids');
+        return response.data;
+    },
+
     getAnnotation: async (essayId: number) => {
-        const response = await api.get<Annotation | null>(`/annotations/${essayId}`);
+        const response = await api.get<Annotation | null>(`/annotations/essay-data/${essayId}`);
         return response.data;
     },
 

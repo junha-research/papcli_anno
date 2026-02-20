@@ -57,7 +57,9 @@ export default function Dashboard() {
                     <h1>Annotation Dashboard</h1>
                     <p>Welcome, {user?.full_name}</p>
                 </div>
-                <button onClick={handleLogout} className="logout-btn">Logout</button>
+                <div className="header-actions">
+                    <button onClick={handleLogout} className="logout-btn">Logout</button>
+                </div>
             </header>
 
             <div className="progress-section">
@@ -77,11 +79,28 @@ export default function Dashboard() {
                             <div
                                 key={essay.id}
                                 className={`essay-card ${essay.is_annotated ? 'completed' : ''}`}
-                                onClick={() => navigate(`/annotate/${essay.id}`)}
+                                onClick={() => {
+                                    if (essay.blind_id) {
+                                        navigate(`/annotate/${essay.blind_id}`);
+                                    } else {
+                                        alert('이 문항은 귀하에게 할당되지 않았습니다.');
+                                    }
+                                }}
                             >
                                 <div className="essay-card-header">
-                                    <h3>{essay.title.split('_')[0]}</h3>
-                                    {essay.is_annotated && <span className="badge">✓ Completed</span>}
+                                    <h3>{essay.title}</h3>
+                                    <div className="card-badges">
+                                        <button 
+                                            className="card-summary-btn"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/summary/${essay.id}`);
+                                            }}
+                                        >
+                                            요약 보기
+                                        </button>
+                                        {essay.is_annotated && <span className="badge">✓ Completed</span>}
+                                    </div>
                                 </div>
                                 <p className="essay-question">{essay.question}</p>
                             </div>

@@ -3,6 +3,7 @@ import { useAuthStore } from './store/authStore';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Annotate from './pages/Annotate';
+import SummaryDetail from './pages/SummaryDetail';
 import './App.css';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -24,10 +25,18 @@ function App() {
           }
         />
         <Route
-          path="/annotate/:essayId"
+          path="/annotate/:blindId"
           element={
             <PrivateRoute>
               <Annotate />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/summary/:essayId"
+          element={
+            <PrivateRoute>
+              <SummaryDetail />
             </PrivateRoute>
           }
         />

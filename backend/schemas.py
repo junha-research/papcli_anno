@@ -26,6 +26,9 @@ class EssayResponse(BaseModel):
     content: str
     question: str
     is_annotated: bool = False
+    summary: Optional[str] = None
+    paper_summary: Optional[str] = None
+    blind_id: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -37,6 +40,9 @@ class EssayDetail(BaseModel):
     question: str
     evidence: Optional[str] = None
     sentences: List[str]
+    summary: Optional[str] = None
+    paper_summary: Optional[str] = None
+    blind_id: Optional[str] = None
     
     class Config:
         from_attributes = True
@@ -51,11 +57,13 @@ class AnnotationCreate(BaseModel):
     language: TraitAnnotation
     organization: TraitAnnotation
     content: TraitAnnotation
+    ai_feedback_score: Optional[int] = None
 
 class AnnotationUpdate(BaseModel):
     language: Optional[TraitAnnotation] = None
     organization: Optional[TraitAnnotation] = None
     content: Optional[TraitAnnotation] = None
+    ai_feedback_score: Optional[int] = None
 
 class AnnotationResponse(BaseModel):
     id: int
@@ -63,7 +71,16 @@ class AnnotationResponse(BaseModel):
     language: TraitAnnotation
     organization: TraitAnnotation
     content: TraitAnnotation
+    ai_feedback_score: Optional[int] = None
     is_submitted: bool
     
+    class Config:
+        from_attributes = True
+
+class BlindAnnotationInfo(BaseModel):
+    blind_id: str
+    display_order: int
+    essay_id: int # Added essay_id
+
     class Config:
         from_attributes = True

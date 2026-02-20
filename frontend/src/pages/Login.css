@@ -82,15 +82,3 @@ button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
-
-.test-credentials {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #eee;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.test-credentials p {
-  margin: 0.25rem 0;
-}

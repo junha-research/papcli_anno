@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from annotation import router as annotations_router
 from typing import List
 import json
 
@@ -10,7 +11,7 @@ from schemas import (
     UserLogin, Token, UserResponse,
     EssayResponse, EssayDetail,
     AnnotationCreate, AnnotationUpdate, AnnotationResponse,
-    TraitAnnotation
+    TraitAnnotation, BlindAnnotationInfo
 )
 from auth import (
     verify_password, create_access_token, get_current_user
@@ -26,7 +27,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(annotations_router)
 # ============ AUTH ENDPOINTS ============
 
 @app.post("/api/auth/login", response_model=Token)
@@ -53,19 +54,23 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
 
 @app.get("/api/essays", response_model=List[EssayResponse])
 def get_essays(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    essays = db.query(Essay).all()
+    # 해당 사용자의 어노테이션 목록을 display_order 순서로 가져옴
+    annotations = db.query(Annotation).filter(
+        Annotation.user_id == current_user.id
+    ).order_by(Annotation.display_order.asc()).all()
+    
     result = []
-    for essay in essays:
-        annotation = db.query(Annotation).filter(
-            Annotation.user_id == current_user.id,
-            Annotation.essay_id == essay.id
-        ).first()
+    for ann in annotations:
+        essay = ann.essay
         result.append(EssayResponse(
             id=essay.id,
-            title=essay.title,
+            title=f"평가 문항 #{ann.display_order}", # 블라인드 순번 제목
             content=essay.content,
             question=essay.question,
-            is_annotated=annotation is not None and annotation.is_submitted
+            is_annotated=ann.is_submitted,
+            summary=essay.summary,
+            paper_summary=essay.paper_summary,
+            blind_id=ann.blind_id
         ))
     return result
 
@@ -75,22 +80,52 @@ def get_essay(essay_id: int, db: Session = Depends(get_db), current_user: User =
     if not essay:
         raise HTTPException(status_code=404, detail="Essay not found")
     
-    # 문장 분리: 마침표/물음표/느낌표 뒤의 '공백' 또는 '줄바꿈 문자(\n)'를 기준으로 나눔
+    # [Refactored Sentence Splitter]
     import re
-    sentences = [s for s in re.split(r'(?<=[.!?])\s+|\n', essay.content.strip()) if s]
+    raw_content = essay.content.strip()
+    
+    # 1. 단순 분리: 온점/물음표/느낌표 뒤에 공백이 오면 일단 분리
+    # (?<=[.!?]) : 문장 부호 뒤를 보되
+    # \s+(?=[A-Z가-힣]) : 뒤에 공백이 있고 그 다음에 대문자나 한글이 올 때만 분리
+    split_pattern = r'(?<=[.!?])\s+(?=[A-Z가-힣])|\n'
+    
+    temp_sentences = [s.strip() for s in re.split(split_pattern, raw_content) if s.strip()]
+    
+    # 2. 예외 케이스 병합 (후처리)
+    # 약어 목록 (이 단어들로 문장이 끝나면 다음 문장과 합침)
+    exceptions = ('et al.', 'e.g.', 'i.e.', 'Fig.', 'vs.', 'Eq.', 'Dr.', 'Mr.', 'Mrs.', '.NET', '. NET')
+    
+    final_sentences = []
+    for s in temp_sentences:
+        if final_sentences:
+            prev = final_sentences[-1]
+            # 이전 문장이 약어로 끝나거나, 현재 문장이 NET 등으로 시작하면 합침
+            if prev.endswith(exceptions) or s.startswith(('.NET', '. NET', 'NET')):
+                final_sentences[-1] = prev + " " + s
+                continue
+        final_sentences.append(s)
+    
+    # 해당 사용자의 어노테이션 정보 조회 (블라인드 ID 및 순서 확인용)
+    annotation = db.query(Annotation).filter(
+        Annotation.user_id == current_user.id,
+        Annotation.essay_id == essay.id
+    ).first()
     
     return EssayDetail(
         id=essay.id,
-        title=essay.title,
+        title=f"평가 문항 #{annotation.display_order}" if annotation else "평가 문항", # 블라인드 처리
         content=essay.content,
         question=essay.question,
         evidence=essay.evidence,
-        sentences=sentences
+        sentences=final_sentences,
+        summary=essay.summary,
+        paper_summary=essay.paper_summary,
+        blind_id=annotation.blind_id if annotation else None
     )
 
 # ============ ANNOTATION ENDPOINTS ============
 
-@app.get("/api/annotations/{essay_id}")
+@app.get("/api/annotations/essay-data/{essay_id}")
 def get_annotation(essay_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     annotation = db.query(Annotation).filter(
         Annotation.user_id == current_user.id,
@@ -115,6 +150,7 @@ def get_annotation(essay_id: int, current_user: User = Depends(get_current_user)
             score=annotation.score_content,
             selected_sentences=json.loads(annotation.selected_sentences_content) if annotation.selected_sentences_content else []
         ),
+        ai_feedback_score=annotation.score_ai_feedback,
         is_submitted=annotation.is_submitted
     )
 
@@ -142,6 +178,7 @@ def create_annotation(
         selected_sentences_organization=json.dumps(data.organization.selected_sentences),
         score_content=data.content.score,
         selected_sentences_content=json.dumps(data.content.selected_sentences),
+        score_ai_feedback=data.ai_feedback_score,
         is_submitted=True
     )
     
@@ -155,6 +192,7 @@ def create_annotation(
         language=data.language,
         organization=data.organization,
         content=data.content,
+        ai_feedback_score=annotation.score_ai_feedback,
         is_submitted=annotation.is_submitted
     )
 
@@ -185,6 +223,9 @@ def update_annotation(
         annotation.score_content = data.content.score
         annotation.selected_sentences_content = json.dumps(data.content.selected_sentences)
     
+    if data.ai_feedback_score is not None:
+        annotation.score_ai_feedback = data.ai_feedback_score
+    
     annotation.is_submitted = True
     
     db.commit()
@@ -205,6 +246,7 @@ def update_annotation(
             score=annotation.score_content,
             selected_sentences=json.loads(annotation.selected_sentences_content) if annotation.selected_sentences_content else []
         ),
+        ai_feedback_score=annotation.score_ai_feedback,
         is_submitted=annotation.is_submitted
     )
 

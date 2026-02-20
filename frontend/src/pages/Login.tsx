@@ -41,7 +41,6 @@ export default function Login() {
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="annotator1"
                             required
                         />
                     </div>
@@ -52,7 +51,6 @@ export default function Login() {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder="password123"
                             required
                         />
                     </div>
@@ -63,12 +61,6 @@ export default function Login() {
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
                 </form>
-
-                <div className="test-credentials">
-                    <p><strong>Test Accounts:</strong></p>
-                    <p>annotator1 / password123</p>
-                    <p>annotator2 / password123</p>
-                </div>
             </div>
         </div>
     );

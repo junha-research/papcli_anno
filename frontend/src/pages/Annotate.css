@@ -373,6 +373,43 @@
     border-radius: 4px;
 }
 
+.trait-description {
+    font-size: 0.85rem;
+    color: #4b5563;
+    line-height: 1.5;
+    margin: 0 0 0.75rem 0;
+    padding: 0.75rem;
+    background: #f9fafb;
+    border-radius: 6px;
+    border-left: 3px solid #667eea;
+}
+
+.scoring-guide {
+    margin-bottom: 1rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff;
+    border: 1px solid #edf2f7;
+    border-radius: 6px;
+}
+
+.scoring-guide h5 {
+    margin: 0 0 0.4rem 0;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.scoring-guide ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    list-style-type: disc;
+}
+
+.scoring-guide li {
+    font-size: 0.75rem;
+    color: #4a5568;
+    margin-bottom: 0.2rem;
+}
+
 .score-group {
     display: flex;
     align-items: center;
